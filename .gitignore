@@ -1,0 +1,48 @@
+# ======================
+# Python
+# ======================
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.env/
+.envrc
+
+# ======================
+# Databases (generated)
+# ======================
+*.db
+
+# ======================
+# Logs
+# ======================
+logs/
+*.log
+
+# ======================
+# Audio files
+# ======================
+musicMAIN/
+musicTEST/
+*.wav
+*.mp3
+*.flac
+*.aiff
+*.ogg
+
+# ======================
+# Build artifacts
+# ======================
+dist/
+build/
+*.app
+*.pkg
+
+# ======================
+# OS / Editor
+# ======================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.iml
