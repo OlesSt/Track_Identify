@@ -32,13 +32,11 @@ def load_peaks(db_path, table):
 # COMPARE TRACKS
 # =========================
 def compare_tracks(main_db_path=None, compare_db_path=None, min_votes_absolute=400):
-    MIN_VOTES_ABSOLUTE = min_votes_absolute
-    MIN_VOTES_RATIO = 0.5
-    # rest of your function remains unchanged
     """
     Compare tracks between main DB and compare DB.
     If paths are None, fallback to config defaults.
     """
+
     # ----------------------
     # Use UI-selected DB paths
     # ----------------------
@@ -87,6 +85,7 @@ def compare_tracks(main_db_path=None, compare_db_path=None, min_votes_absolute=4
 
         if not found:
             print(f"TRACK '{cmp_name}' NOT FOUND in main DB")
+
 
 # =========================
 # RUN
