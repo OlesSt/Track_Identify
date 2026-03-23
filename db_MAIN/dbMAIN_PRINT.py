@@ -1,6 +1,7 @@
 import sqlite3
 import config
 
+
 def print_db_contents():
     print("DEBUG: Starting 'print_db_contents' function")
     print(f"DEBUG: Database path: {config.DB_MAIN}")

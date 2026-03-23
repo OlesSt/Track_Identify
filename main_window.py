@@ -71,22 +71,22 @@ class MainWindow(QtWidgets.QWidget):
         votes_layout = QtWidgets.QHBoxLayout()
         self.votes_slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
         self.votes_slider.setMinimum(10)
-        self.votes_slider.setMaximum(1000)
+        self.votes_slider.setMaximum(10000)
         self.votes_slider.setValue(400)  # default
-        self.votes_slider.setTickInterval(50)
+        self.votes_slider.setTickInterval(500)
         self.votes_slider.setTickPosition(QtWidgets.QSlider.TickPosition.TicksBelow)
         self.votes_slider.valueChanged.connect(self.update_votes_label)
 
         votes_layout.addWidget(QtWidgets.QLabel("10"))
         votes_layout.addWidget(self.votes_slider)
-        votes_layout.addWidget(QtWidgets.QLabel("1000"))
+        votes_layout.addWidget(QtWidgets.QLabel("10000"))
         layout.addLayout(votes_layout)
 
         # ---------------------------
         # Min Votes Ratio Slider
         # ---------------------------
         layout.addWidget(QtWidgets.QLabel("MINIMUM VOTES RATIO"))
-        self.ratio_label = QtWidgets.QLabel("Current Min Ratio: 0.50")
+        self.ratio_label = QtWidgets.QLabel("Current: 0.50")
         layout.addWidget(self.ratio_label)
 
         ratio_layout = QtWidgets.QHBoxLayout()
@@ -147,11 +147,11 @@ class MainWindow(QtWidgets.QWidget):
             self.test_music_input.setText(folder)
 
     def update_votes_label(self):
-        self.votes_label.setText(f"Current Min Votes: {self.votes_slider.value()}")
+        self.votes_label.setText(f"Current: {self.votes_slider.value()}")
 
     def update_ratio_label(self):
         ratio = self.ratio_slider.value() / 100
-        self.ratio_label.setText(f"Current Min Ratio: {ratio:.2f}")
+        self.ratio_label.setText(f"Current: {ratio:.2f}")
 
     # ---------------------------
     # Button Handlers

@@ -8,6 +8,7 @@ COMPARE_DB_PATH = config.DB_TO_COMPARE  # separate DB for comparison tracks
 TRACKS_FOLDER = "/Users/oles/Documents/progLOCAL_SHAZAM/musicTEST"  # folder with tracks
 TOP_PEAKS = 5  # number of peaks per frame, same as main DB
 
+
 def extract_peaks(S, sr, top_n=TOP_PEAKS):
     """
     Extract top_n peaks per frame from spectrogram S (magnitude)

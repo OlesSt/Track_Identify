@@ -6,10 +6,12 @@ import config  # Import your config.py
 
 TOP_PEAKS = 5  # number of peaks per frame
 
+
 def extract_peaks(S, sr, top_n=TOP_PEAKS):
     """
     Extract top_n peaks per frame from spectrogram S (magnitude)
     Returns: List of tuples: [(frame_index, [freq1, freq2, ...]), ...]
+    S - spectrogram, sr - sample rate, top_n - peaks per frame
     """
     peaks_per_frame = []
     for i in range(S.shape[1]):  # iterate over frames
@@ -96,7 +98,6 @@ def create_db_and_index(folder_path=None, db_folder=None):
     conn.commit()
     conn.close()
     print("\nDEBUG: Finished processing all tracks")
-
 
 
 if __name__ == "__main__":

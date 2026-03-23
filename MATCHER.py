@@ -31,7 +31,7 @@ def load_peaks(db_path, table):
 # =========================
 # COMPARE TRACKS
 # =========================
-def compare_tracks(main_db_path=None, compare_db_path=None, min_votes_absolute=400):
+def compare_tracks(main_db_path=None, compare_db_path=None, min_votes_absolute=400, min_votes_ratio=0.5):
     """
     Compare tracks between main DB and compare DB.
     If paths are None, fallback to config defaults.
@@ -53,8 +53,13 @@ def compare_tracks(main_db_path=None, compare_db_path=None, min_votes_absolute=4
         found = False
 
         cmp_len = len(cmp_hashes)
+        # min_votes = max(
+        #     MIN_VOTES_ABSOLUTE,
+        #     int(cmp_len * MIN_VOTES_RATIO)
+        # )
+
         min_votes = max(
-            MIN_VOTES_ABSOLUTE,
+            min_votes_absolute,  # use the function argument
             int(cmp_len * MIN_VOTES_RATIO)
         )
 
@@ -72,6 +77,12 @@ def compare_tracks(main_db_path=None, compare_db_path=None, min_votes_absolute=4
 
             if not offset_votes:
                 continue
+
+            # print(f"DEBUG: cmp_hashes = {len(cmp_hashes)}")
+            # print(f"DEBUG: main_hashes = {len(main_hashes)}")
+            #
+            # common = set(cmp_hashes) & set(main_hashes)
+            # print(f"DEBUG: common hashes = {len(common)}")
 
             best_offset, votes = offset_votes.most_common(1)[0]
 
