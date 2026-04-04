@@ -1,68 +1,61 @@
-from collections import defaultdict, Counter
-from storage.db import load_peaks
+from collections import defaultdict
+from storage.db import load_hashes
 
 
 def find_matches(
     main_db_path: str,
     query_db_path: str,
-    min_votes: int = 400,
-    min_ratio: float = 0.5
+    min_ratio: float = 0.65
 ) -> list:
     """
-    Compare every query track against the main library using offset voting.
+    Match query tracks against the main library using hash lookup + offset voting.
 
     Args:
         main_db_path:  path to the indexed library DB
         query_db_path: path to the indexed query DB
-        min_votes:     absolute minimum vote count to declare a match
-        min_ratio:     minimum votes as a fraction of query track length
-                       (whichever of min_votes / min_ratio is higher wins)
+        min_ratio:     minimum hits as a fraction of query hashes
 
     Returns:
         List of result strings — one per query track.
-        Caller decides how to display them.
     """
     results = []
 
-    query_tracks = load_peaks(query_db_path)
-    library_tracks = load_peaks(main_db_path)
+    library = load_hashes(main_db_path)
+    query_tracks = load_hashes(query_db_path)
 
-    for query_name, query_hashes in query_tracks.items():
+    query_by_track = defaultdict(list)
+    for hash_int, entries in query_tracks.items():
+        for track_name, anchor_frame in entries:
+            query_by_track[track_name].append((hash_int, anchor_frame))
+
+    for query_name, query_hashes in query_by_track.items():
         query_len = len(query_hashes)
-        threshold = max(min_votes, int(query_len * min_ratio))
+        threshold = max(50, int(query_len * min_ratio))
+
+        offset_votes = defaultdict(lambda: defaultdict(int))
+
+        for hash_int, query_frame in query_hashes:
+            for lib_track, lib_frame in library.get(hash_int, []):
+                offset = lib_frame - query_frame
+                offset_votes[lib_track][offset] += 1
+
         best_match = None
         best_votes = 0
 
-        for lib_name, lib_hashes in library_tracks.items():
-            # Build fast lookup: freq_hash → [frame_indices]
-            lib_lookup = defaultdict(list)
-            for h, f in lib_hashes:
-                lib_lookup[h].append(f)
-
-            # Vote on time offsets
-            offset_votes = Counter()
-            for h, query_frame in query_hashes:
-                for lib_frame in lib_lookup.get(h, []):
-                    offset = lib_frame - query_frame
-                    weight = 1 + max(0, 50 - abs(offset)) / 50
-                    offset_votes[offset] += weight
-
-            if not offset_votes:
-                continue
-
-            best_offset, votes = offset_votes.most_common(1)[0]
-
-            if votes >= threshold and votes > best_votes:
-                best_votes = votes
-                best_match = (lib_name, best_offset, votes)
+        for lib_track, offsets in offset_votes.items():
+            top_votes = max(offsets.values())
+            if top_votes >= threshold and top_votes > best_votes:
+                best_votes = top_votes
+                best_offset = max(offsets, key=offsets.get)
+                best_match = (lib_track, best_offset, top_votes)
 
         if best_match:
             lib_name, offset, votes = best_match
             results.append(
                 f"MATCH:     '{query_name}'  →  '{lib_name}'  "
-                f"({votes:.1f} votes, offset {offset})"
+                f"({votes} votes, offset {offset}, threshold {threshold})"
             )
         else:
-            results.append(f"NOT FOUND: '{query_name}'")
+            results.append(f"NOT FOUND: '{query_name}'  (threshold {threshold})")
 
     return results

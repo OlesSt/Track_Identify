@@ -15,6 +15,7 @@ WINDOW = "hann"
 # Peak detection
 # =========================
 PEAKS_PER_FRAME = 5          # Top spectral peaks extracted per frame
+MIN_RATIO = 0.5
 
 # =========================
 # Supported audio formats
@@ -27,10 +28,10 @@ SUPPORTED_EXTENSIONS = {".wav", ".mp3", ".aiff", ".aif", ".flac", ".ogg", ".mp4"
 # Kept here as a roadmap for the next algorithm version
 # (pairing + hashing + dominance scoring, like real Shazam)
 # =========================
-# PEAK_MIN_DB = -30
-# PAIR_MIN_TIME_DELTA = 0.5
-# PAIR_MAX_TIME_DELTA = 3.0
-# MAX_PAIRS_PER_PEAK = 5
-# HASH_BITS = 32
-# MIN_MATCHES = 20
-# DOMINANCE_RATIO = 1.8
+PEAK_MIN_DB = -30
+PAIR_MIN_TIME_DELTA = 0.5
+PAIR_MAX_TIME_DELTA = 3.0
+MAX_PAIRS_PER_PEAK = 5
+HASH_BITS = 32
+MIN_MATCHES = 20
+DOMINANCE_RATIO = 1.8

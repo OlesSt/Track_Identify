@@ -1,13 +1,14 @@
 import os
 import config
 from audio.loader import load_audio
-from audio.extractor import extract_peaks
-from storage.db import create_table, insert_peaks
-
+from audio.extractor import extract_peaks, pair_peaks
+from storage.db import create_hash_table, insert_hashes, get_indexed_tracks
+from storage.db import create_metadata_table, update_metadata_last_update
 
 def index_folder(audio_folder: str, db_path: str) -> list:
     """
     Index all supported audio files in audio_folder into db_path.
+    Skips tracks already indexed by filename.
     Works for both the main library (→ main.db) and query tracks (→ query.db).
 
     Args:
@@ -15,7 +16,7 @@ def index_folder(audio_folder: str, db_path: str) -> list:
         db_path:      path to the target SQLite DB
 
     Returns:
-        List of log message strings (no print statements — caller decides what to do with them).
+        List of log message strings.
     """
     logs = []
 
@@ -27,19 +28,30 @@ def index_folder(audio_folder: str, db_path: str) -> list:
     if not files:
         return [f"ERROR: No supported audio files found in '{audio_folder}'"]
 
-    logs.append(f"Found {len(files)} file(s) to index → '{db_path}'")
-    create_table(db_path)
+    create_hash_table(db_path)
+    create_metadata_table(db_path)
+    already_indexed = get_indexed_tracks(db_path)
 
-    for filename in files:
+    new_files = [f for f in files if f not in already_indexed]
+    skipped = len(files) - len(new_files)
+
+    logs.append(f"Found {len(files)} file(s) in folder — {len(new_files)} new, {skipped} already indexed")
+
+    if not new_files:
+        logs.append("Library is up to date. Nothing to add.")
+        return logs
+
+    for filename in new_files:
         path = os.path.join(audio_folder, filename)
         try:
             y, sr = load_audio(path)
             peaks = extract_peaks(y, sr)
-            insert_peaks(db_path, filename, peaks)
-            logs.append(f"  Indexed '{filename}' ({len(peaks)} peaks)")
-
+            hashes = pair_peaks(peaks, sr)
+            insert_hashes(db_path, filename, hashes)
+            logs.append(f"  Added '{filename}' ({len(peaks)} peaks → {len(hashes)} hashes)")
         except Exception as e:
             logs.append(f"  ERROR indexing '{filename}': {e}")
 
-    logs.append(f"Done.")
+    update_metadata_last_update(db_path)
+    logs.append("Done.")
     return logs

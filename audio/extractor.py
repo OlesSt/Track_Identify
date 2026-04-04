@@ -34,3 +34,46 @@ def extract_peaks(y: np.ndarray, sr: int) -> list:
             peaks.append((frame_index, freq_hz))
 
     return peaks
+
+
+def pair_peaks(peaks: list, sr: int) -> list:
+    """
+    Generate hashes from peak pairs.
+    For each anchor peak, pair it with nearby peaks within the time window.
+
+    Args:
+        peaks: list of (frame_index, freq_hz) from extract_peaks()
+        sr:    sample rate
+
+    Returns:
+        List of (hash_int, anchor_frame) tuples — one per valid pair.
+    """
+    frames_per_sec = sr / config.HOP_LENGTH
+    min_delta = int(config.PAIR_MIN_TIME_DELTA * frames_per_sec)
+    max_delta = int(config.PAIR_MAX_TIME_DELTA * frames_per_sec)
+
+    hashes = []
+
+    for i, (anchor_frame, anchor_freq) in enumerate(peaks):
+        pairs_found = 0
+
+        for j in range(i + 1, len(peaks)):
+            target_frame, target_freq = peaks[j]
+            delta = target_frame - anchor_frame
+
+            if delta < min_delta:
+                continue
+            if delta > max_delta:
+                break
+
+            freq1 = int(anchor_freq)
+            freq2 = int(target_freq)
+            hash_int = (freq1 & 0xFFF) << 20 | (freq2 & 0xFFF) << 8 | (delta & 0xFF)
+
+            hashes.append((hash_int, anchor_frame))
+            pairs_found += 1
+
+            if pairs_found >= config.MAX_PAIRS_PER_PEAK:
+                break
+
+    return hashes
