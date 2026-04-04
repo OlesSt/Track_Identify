@@ -134,7 +134,7 @@ class MainWindow(QtWidgets.QWidget):
         # ---------------------------
         # Advanced Search (collapsible)
         # ---------------------------
-        self.advanced_btn = QtWidgets.QPushButton("▶  More")
+        self.advanced_btn = QtWidgets.QPushButton("▶  Advanced Search")
         self.advanced_btn.setCheckable(True)
         self.advanced_btn.setChecked(False)
         self.advanced_btn.clicked.connect(self.toggle_advanced)
