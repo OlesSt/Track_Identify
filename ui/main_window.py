@@ -1,19 +1,15 @@
 from PyQt6 import QtWidgets, QtCore
-import sys
 import os
-import io, contextlib
 from datetime import datetime
 
-from db_MAIN.dbMAIN_CREATE import create_db_and_index
-from db_TO_COMPARE.dbCOMPARE_CREATE import add_tracks_for_comparison
-from MATCHER import compare_tracks
+from matching import index_folder, find_matches
 
 
 class MainWindow(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Local Music Matcher")
-        self.setGeometry(300, 200, 800, 550)
+        self.setGeometry(300, 200, 800, 1000)
         self.setup_ui()
 
     def setup_ui(self):
@@ -44,12 +40,13 @@ class MainWindow(QtWidgets.QWidget):
         browse_folder_btn.clicked.connect(self.select_music_folder)
         folder_layout.addWidget(browse_folder_btn)
         layout.addLayout(folder_layout)
+
         self.index_btn = QtWidgets.QPushButton("INDEX")
         self.index_btn.clicked.connect(self.run_index)
         layout.addWidget(self.index_btn)
 
         # ---------------------------
-        # Test Music Folder Selection -> HERE SHOULD BE DRAG AND DROP
+        # Query Music Folder Selection
         # ---------------------------
         layout.addWidget(QtWidgets.QLabel("Path to music you want to identify"))
         test_folder_layout = QtWidgets.QHBoxLayout()
@@ -72,11 +69,10 @@ class MainWindow(QtWidgets.QWidget):
         self.votes_slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
         self.votes_slider.setMinimum(10)
         self.votes_slider.setMaximum(10000)
-        self.votes_slider.setValue(400)  # default
+        self.votes_slider.setValue(400)
         self.votes_slider.setTickInterval(500)
         self.votes_slider.setTickPosition(QtWidgets.QSlider.TickPosition.TicksBelow)
         self.votes_slider.valueChanged.connect(self.update_votes_label)
-
         votes_layout.addWidget(QtWidgets.QLabel("10"))
         votes_layout.addWidget(self.votes_slider)
         votes_layout.addWidget(QtWidgets.QLabel("10000"))
@@ -90,30 +86,27 @@ class MainWindow(QtWidgets.QWidget):
         layout.addWidget(self.ratio_label)
 
         ratio_layout = QtWidgets.QHBoxLayout()
-
         self.ratio_slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
         self.ratio_slider.setMinimum(10)
         self.ratio_slider.setMaximum(100)
-        self.ratio_slider.setValue(50)  # default = 0.5
+        self.ratio_slider.setValue(50)
         self.ratio_slider.setTickInterval(5)
         self.ratio_slider.setTickPosition(QtWidgets.QSlider.TickPosition.TicksBelow)
         self.ratio_slider.valueChanged.connect(self.update_ratio_label)
-
         ratio_layout.addWidget(QtWidgets.QLabel("0.10"))
         ratio_layout.addWidget(self.ratio_slider)
         ratio_layout.addWidget(QtWidgets.QLabel("1.00"))
-
         layout.addLayout(ratio_layout)
 
         # ---------------------------
-        # IDENTIFY BUTTON - STARTS MATCHING
+        # Identify Button
         # ---------------------------
         self.identify_btn = QtWidgets.QPushButton("IDENTIFY")
         self.identify_btn.clicked.connect(self.run_identify)
         layout.addWidget(self.identify_btn)
 
         # ---------------------------
-        # Output Debug Field
+        # Output Field
         # ---------------------------
         self.output_field = QtWidgets.QTextEdit()
         self.output_field.setReadOnly(True)
@@ -129,7 +122,7 @@ class MainWindow(QtWidgets.QWidget):
         self.setLayout(layout)
 
     # ---------------------------
-    # File Dialogs
+    # Folder Dialogs
     # ---------------------------
     def select_db_folder(self):
         folder = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Database Folder")
@@ -142,16 +135,18 @@ class MainWindow(QtWidgets.QWidget):
             self.music_folder_input.setText(folder)
 
     def select_test_folder(self):
-        folder = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Test Music Folder")
+        folder = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Query Music Folder")
         if folder:
             self.test_music_input.setText(folder)
 
+    # ---------------------------
+    # Slider Labels
+    # ---------------------------
     def update_votes_label(self):
         self.votes_label.setText(f"Current: {self.votes_slider.value()}")
 
     def update_ratio_label(self):
-        ratio = self.ratio_slider.value() / 100
-        self.ratio_label.setText(f"Current: {ratio:.2f}")
+        self.ratio_label.setText(f"Current: {self.ratio_slider.value() / 100:.2f}")
 
     # ---------------------------
     # Button Handlers
@@ -159,104 +154,91 @@ class MainWindow(QtWidgets.QWidget):
     def run_index(self):
         folder = self.music_folder_input.text().strip()
         db_folder = self.db_folder_input.text().strip()
+
         if not db_folder:
-            self.output("Please select a database folder first!")
+            self.log("Please select a database folder first!")
             return
         if not folder:
-            self.output("Please select your music library folder first!")
+            self.log("Please select your music library folder first!")
             return
-        if not os.path.exists(db_folder):
-            os.makedirs(db_folder, exist_ok=True)
-        self.output(f"Indexing folder: {folder} into DB folder: {db_folder}")
+
+        db_path = os.path.join(db_folder, "main.db")
         try:
-            buffer = io.StringIO()
-            with contextlib.redirect_stdout(buffer):
-                create_db_and_index(folder_path=folder, db_folder=db_folder)
-            self.output(buffer.getvalue())
+            logs = index_folder(audio_folder=folder, db_path=db_path)
+            for line in logs:
+                self.log(line)
         except Exception as e:
-            self.output(f"INDEX failed: {e}")
+            import traceback
+            self.log(traceback.format_exc())
+        # except Exception as e:
+        #     self.log(f"INDEX failed: {e}")
 
     def run_identify(self):
         test_folder = self.test_music_input.text().strip()
         db_folder = self.db_folder_input.text().strip()
 
         if not db_folder:
-            self.output("Please select a database folder first!")
+            self.log("Please select a database folder first!")
             return
         if not test_folder:
-            self.output("Please select a test music folder first!")
+            self.log("Please select a query music folder first!")
             return
-        if not os.path.exists(db_folder):
-            os.makedirs(db_folder, exist_ok=True)
 
-        self.output(f"Identifying tracks in folder: {test_folder} using DB folder: {db_folder}")
+        main_db_path = os.path.join(db_folder, "main.db")
+        query_db_path = os.path.join(db_folder, "query.db")
+        min_votes = self.votes_slider.value()
+        min_ratio = self.ratio_slider.value() / 100
+
         try:
-            buffer = io.StringIO()
-            with contextlib.redirect_stdout(buffer):
-                add_tracks_for_comparison(folder_path=test_folder, db_folder=db_folder)
+            # Step 1: index query tracks
+            self.log("Indexing query tracks...")
+            logs = index_folder(audio_folder=test_folder, db_path=query_db_path)
+            for line in logs:
+                self.log(line)
 
-                main_db_path = os.path.join(db_folder, "main.db")
-                compare_db_path = os.path.join(db_folder, "compare.db")
+            # Step 2: run matching
+            self.log(
+                f"\n--- MATCH SETTINGS ---\n"
+                f"MIN_VOTES = {min_votes}  |  MIN_RATIO = {min_ratio:.2f}\n"
+                f"----------------------"
+            )
+            results = find_matches(
+                main_db_path=main_db_path,
+                query_db_path=query_db_path,
+                min_votes=min_votes,
+                min_ratio=min_ratio
+            )
+            for line in results:
+                self.log(line)
 
-                # Get current slider value
-                min_votes_absolute = self.votes_slider.value()
-                min_votes_ratio = self.ratio_slider.value() / 100
-
-                # Print & log MIN_VOTES header
-                header = (
-                    f"\n---------- MATCH SETTINGS ----------\n"
-                    f"MIN_VOTES_ABSOLUTE = {min_votes_absolute}\n"
-                    f"MIN_VOTES_RATIO    = {min_votes_ratio:.2f}\n"
-                    f"-----------------------------------\n"
-                )
-                print(header)
-
-                # Run matcher
-                compare_tracks(
-                    main_db_path=main_db_path,
-                    compare_db_path=compare_db_path,
-                    min_votes_absolute=min_votes_absolute
-                )
-
-            self.output(buffer.getvalue())
         except Exception as e:
-            self.output(f"IDENTIFY failed: {e}")
+            self.log(f"IDENTIFY failed: {e}")
 
     # ---------------------------
-    # Output Helper
+    # Helpers
     # ---------------------------
-    def output(self, text):
+    def log(self, text):
         self.output_field.append(text)
         self.output_field.verticalScrollBar().setValue(
             self.output_field.verticalScrollBar().maximum()
         )
 
-    # ---------------------------
-    # Save Logs Helper
-    # ---------------------------
     def save_logs(self):
         log_text = self.output_field.toPlainText()
         if not log_text.strip():
-            self.output("No logs to save!")
+            self.log("No logs to save!")
             return
 
         folder = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Folder to Save Logs")
         if not folder:
-            self.output("Save cancelled.")
+            self.log("Save cancelled.")
             return
 
         now = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = os.path.join(folder, f"local_music_logs_{now}.txt")
+        filename = os.path.join(folder, f"local_shazam_logs_{now}.txt")
         try:
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(log_text)
-            self.output(f"Logs saved to '{filename}'")
+            self.log(f"Logs saved to '{filename}'")
         except Exception as e:
-            self.output(f"Failed to save logs: {e}")
-
-
-if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec())
+            self.log(f"Failed to save logs: {e}")
