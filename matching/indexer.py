@@ -5,7 +5,8 @@ from audio.extractor import extract_peaks, pair_peaks
 from storage.db import create_hash_table, insert_hashes, get_indexed_tracks
 from storage.db import create_metadata_table, update_metadata_last_update
 
-def index_folder(audio_folder: str, db_path: str) -> list:
+
+def index_folder(audio_folder: str, db_path: str, force_rebuild: bool = False) -> list:
     """
     Index all supported audio files in audio_folder into db_path.
     Skips tracks already indexed by filename.
@@ -28,6 +29,8 @@ def index_folder(audio_folder: str, db_path: str) -> list:
     if not files:
         return [f"ERROR: No supported audio files found in '{audio_folder}'"]
 
+    if force_rebuild and os.path.exists(db_path):
+        os.remove(db_path)
     create_hash_table(db_path)
     create_metadata_table(db_path)
     already_indexed = get_indexed_tracks(db_path)

@@ -8,6 +8,7 @@ from storage import get_avg_hashes_per_track
 
 from storage import get_library_info
 
+
 class DropZone(QtWidgets.QLabel):
     files_dropped = QtCore.pyqtSignal(list)
 
@@ -133,7 +134,7 @@ class MainWindow(QtWidgets.QWidget):
         # ---------------------------
         # Advanced Search (collapsible)
         # ---------------------------
-        self.advanced_btn = QtWidgets.QPushButton("▶  Advanced Search")
+        self.advanced_btn = QtWidgets.QPushButton("▶  More")
         self.advanced_btn.setCheckable(True)
         self.advanced_btn.setChecked(False)
         self.advanced_btn.clicked.connect(self.toggle_advanced)
@@ -259,7 +260,7 @@ class MainWindow(QtWidgets.QWidget):
             query_db_path = os.path.join(db_folder, "query.db")
             main_db_path = os.path.join(db_folder, "main.db")
 
-            logs = index_folder(audio_folder=tmp_folder, db_path=query_db_path)
+            logs = index_folder(audio_folder=tmp_folder, db_path=query_db_path, force_rebuild=True)
 
             for line in logs:
                 self.console(line)
@@ -335,7 +336,7 @@ class MainWindow(QtWidgets.QWidget):
         query_db_path = os.path.join(db_folder, "query.db")
 
         try:
-            logs = index_folder(audio_folder=test_folder, db_path=query_db_path)
+            logs = index_folder(audio_folder=test_folder, db_path=query_db_path, force_rebuild=True)
 
             for line in logs:
                 self.console(line)
@@ -366,8 +367,6 @@ class MainWindow(QtWidgets.QWidget):
                 else:
                     query_name = line.replace("NOT FOUND:", "").split("(")[0].strip().strip("'")
                     self.log_not_found(query_name)
-
-
 
         except Exception as e:
             self.log(f"IDENTIFY failed: {e}")
