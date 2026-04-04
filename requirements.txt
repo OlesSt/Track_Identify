@@ -2,6 +2,6 @@ numpy
 scipy
 librosa==0.10.1
 soundfile
-PyQt6
+PySide6
 numba==0.57.1
 llvmlite==0.40.1

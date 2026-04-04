@@ -1,5 +1,5 @@
 from config import MIN_RATIO
-from PyQt6 import QtWidgets, QtCore, QtGui
+from PySide6 import QtWidgets, QtCore, QtGui
 import os
 from datetime import datetime
 
@@ -10,7 +10,7 @@ from storage import get_library_info
 
 
 class DropZone(QtWidgets.QLabel):
-    files_dropped = QtCore.pyqtSignal(list)
+    files_dropped = QtCore.Signal(list)
 
     def __init__(self):
         super().__init__()

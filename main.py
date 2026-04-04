@@ -1,4 +1,4 @@
-from PyQt6 import QtWidgets
+from PySide6 import QtWidgets
 import sys
 import os
 from ui import MainWindow
