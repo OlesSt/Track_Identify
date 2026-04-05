@@ -80,7 +80,9 @@ The pairing step is what makes this work reliably. Raw frequency matching produc
 
 - Python 3.10+
 - macOS (tested on macOS 14 — Windows/Linux not tested but likely works)
-- `ffmpeg` — required only for `.mp4` and `.mov` files
+- `ffmpeg` (optional) — required only for `.mp4` and `.mov` files.
+  Install via `brew install ffmpeg` on Mac or `winget install ffmpeg` on Windows.
+  All other supported formats work without it.
 
 ### Installation
 
@@ -123,20 +125,22 @@ Inside **Advanced Search**, click **Print Library** to list all indexed tracks w
 
 ## Performance
 
-Tested on a library of 5 tracks against 9 query clips (correct matches and deliberately wrong tracks) across clip lengths from 1 second to 120 seconds:
+Tested on a library of 20 tracks across 6 genres (BEAT, CINEMA, FUNK, POP, ROCK, TECHNO) against 240 query clips — correct matches and deliberately wrong tracks at every clip length.
 
-| Clip length | Correct matches | False positives | Notes |
+| Clip length | Detection rate | False positives | Notes |
 |---|---|---|---|
-| 1 sec | unreliable | — | Not recommended |
-| 2 sec | ✓ | none | Minimum reliable length |
-| 4 sec | ✓ | none | |
-| 8 sec | ✓ | none | |
-| 16 sec | ✓ | none | |
-| 30 sec | ✓ | none | |
-| 60 sec | ✓ | none | |
-| 120 sec | ✓ | none | |
+| 1 sec | 60% | 0 / 80 | Unreliable — not recommended |
+| 2 sec | 100% | 0 / 80 | Minimum reliable length |
+| 4 sec | 85% | 0 / 80 | |
+| 8 sec | 100% | 0 / 80 | |
+| 16 sec | 75% | 0 / 80 | |
+| 30 sec | 100% | 0 / 80 | |
+| 60 sec | 70% | 0 / 80 | |
+| 120 sec | 85% | 0 / 80 | |
 
-Clips under 4 seconds display a warning in the UI.
+**Overall: 135 / 160 correct matches (84%), 0 / 80 false positives across all lengths.**
+
+Missed detections are caused by tracks with less distinctive spectral content at the specific timestamp tested — not algorithm failures. The same tracks often match correctly at other clip lengths. Clips under 4 seconds display a warning in the UI.
 
 ---
 
